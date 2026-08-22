@@ -1,2 +1,0 @@
-# MachineLearningC
-Propuesta de Investigación
