@@ -1,0 +1,37 @@
+.UC{
+    
+    .IR{
+        .IRHeader{
+            text-align: left;
+            color: black;
+            font-size: 16px;
+        }
+
+        .InstructionFormat{
+            margin: auto;
+            display: flex;
+            width: auto;
+            height: 25px;
+
+            .COP{
+                width: 50px;
+                border: 1px solid;
+                border-color: black;
+
+                text-align: center;
+                color: black;
+            }
+            .DATA{
+                width: 120px;
+                
+                border-top: 1px solid;
+                border-bottom: 1px solid;
+                border-right: 1px solid;
+                border-color: black;
+
+                text-align: center;
+                color: black;
+            }
+        }
+    }
+}
