@@ -2,8 +2,32 @@ import { app, shell, BrowserWindow, ipcMain } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
+import { spawn } from 'child_process'
+
+
+const initiateOrderDjango = () => {
+  // Iniciar el comando en cmd
+  const djangoOrder = spawn('python', ['C:\\Users\\garyg\\Desktop\\Repositorios\\ARM610-Simulator\\electron-app\\python\\site_python\\manage.py', 'runserver', '--noreload']);
+
+  // Obtener resultados
+  djangoOrder.stdout.on("data", (data) => {
+    console.log(`stdout: ${data}`);
+  })
+  
+  djangoOrder.stderr.on('data', data => {
+    console.log(`stderr: ${data}`);
+  })
+
+  djangoOrder.on('error', (error) => {
+    console.log(`error: ${error.message}`)
+  })
+
+  return djangoOrder;
+}
 
 function createWindow(): void {
+  initiateOrderDjango();
+
   // Create the browser window.
   const mainWindow = new BrowserWindow({
     width: 900,

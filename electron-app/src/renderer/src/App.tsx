@@ -1,12 +1,9 @@
-
-
 import ARM6 from './components/ARM6'
 
 import './assets/ARM610.css'
 
 import Versions from './components/Versions'
 import electronLogo from './assets/electron.svg'
-
 
 function App(): React.JSX.Element {
   const ipcHandle = (): void => window.electron.ipcRenderer.send('ping')

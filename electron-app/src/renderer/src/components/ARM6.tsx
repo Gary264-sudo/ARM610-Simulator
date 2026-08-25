@@ -1,3 +1,4 @@
+import axios from 'axios';
 import { stringify } from 'querystring';
 import '../assets/ARM6.css'
 
@@ -5,6 +6,8 @@ import '../assets/ARM6.css'
 // {} compile things is Javascript
 // Este codigo puede sufrir de dividitis
 // https://brainstormsandraves.com/web-standards/html-semantics-structure/
+
+const 
 
 function ARM6(){
     
