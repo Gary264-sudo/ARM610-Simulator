@@ -1,5 +1,28 @@
+.cpu-line-1{
+    offset-path: path("M 10 20 h 79.5 q 5 0 5 5 v 30");
+    animation-duration: 5s;
+    animation-delay: 1s;
+    color: black;
+}
+
 .UC{
-    
+    .PC{
+        .PCHeader{
+            text-align: left;
+            color: black;
+            font-size: 16px;
+        }
+        .CounterFormat{
+            margin: auto;
+            display: flex;
+            border: 1px solid;
+            border-color: black;
+            .valuePC_hex{
+                color: black;
+            }
+        }
+    }
+
     .IR{
         .IRHeader{
             text-align: left;

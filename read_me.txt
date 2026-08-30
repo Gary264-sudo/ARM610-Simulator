@@ -31,7 +31,7 @@ python manage.py startapp API
 
 add path('', include(API.urls)), in \site_python\site_python\urls.py
 
-
+npm install axios
 
 4. 
 
