@@ -13,7 +13,8 @@ urlpatterns = [
     #  - views.index significa que ejecutara la funcion index del script views del API
     #  - name significa el nombre del URL (se recomienda el mismo nombre que el URL)
     path('', views.index, name='index'),
-    path('PCvalue/', views.PCvalue, name='PC')
+    path('PCvalue/', views.PCvalue, name='PC'),
+    path('MP_ram/', views.Compiler, name='MP_ram'),
 
     # Por ejemplo:
     # '/MMU' significa que es un URL especifico

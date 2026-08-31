@@ -2,14 +2,11 @@ import axios from 'axios';
 import '../assets/ARM6.css'
 
 import Xarrow from 'react-xarrows';
-import SteppedLineTo from 'react-lineto';
 
 // Props are reusable pieces
 // {} compile things is Javascript
 // Este codigo puede sufrir de dividitis
 // https://brainstormsandraves.com/web-standards/html-semantics-structure/
-
-
 
 function ARM6(){
     
@@ -57,9 +54,9 @@ function ARM6(){
                     </div>
                 </div>
 
-                <Xarrow start="CF" end="IF" animateDrawing={-3} dashness={true} showTail={true} path="grid"/>
+                <Xarrow start="CF" end="IF" animateDrawing={-3} headSize={2} tailSize={2} dashness={true} showTail={true} path="grid"/>
 
-                <div className="Control">
+                <div className="ControlUnit">
                     <header className="Decodificador">
                         <p>Decodificador</p>
                         <div className=""></div>

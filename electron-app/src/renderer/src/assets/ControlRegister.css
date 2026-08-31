@@ -1,0 +1,6 @@
+.ControlRegister{
+    border: 1px solid;
+    border-color: black;
+    width: 10px;
+    height: 5px;
+}

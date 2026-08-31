@@ -12,8 +12,6 @@ from rest_framework.response import Response
 # Static template: Es una pagina que no tiene cambios
 # Dynamic template: Es una pagina que tiene cambios debido a una funcion en particular
 
-# Publicar los datos en Django -> obtener los datos mediante Axios -> Enviarlos a la aplicacion
-
 reloj = {0, 0, 0, 0, 0, 0, 0, 0}
 
 @api_view(('GET',))
@@ -27,12 +25,26 @@ def get_val_from(self, request):
 
 @api_view(('GET',))
 @action(methods=['GET'], detail = False, name='Get value from input')
+def Compiler(request):
+    script = request.GET['text']
+
+    line_code = []
+
+    first_check = script.split(" ", 3)
+    for check in first_check:
+        command = check.split("\r\n")
+        line_code.append(command)
+
+    return Response(status=status.HTTP_200_OK, data = line_code)
+
+@api_view(('GET',))
+@action(methods=['GET'], detail = False, name='Get value from input')
 def PCvalue(request):
     # El PC tiene un tamaño de 12 bits
     # Esta sincronizado por el generador de pulsos de reloj
 
     input = request.GET['input']
-
+        
     # Si el reloj tuviese un segundo pulso de reloj, se realiza el incremento del PC
     # if(reloj[2] == 1):
     #     count = count + 1

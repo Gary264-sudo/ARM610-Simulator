@@ -75,7 +75,10 @@ mainWindow.webContents.session.webRequest.onBeforeSendHeaders((details, callback
     });
   });
 
-4. 
-
+4. Comenzar a codificar python y React
+La manera en como se envian los datos mediante las APIs de Django hacia la aplicacion de Electron es de la siguiente manera:
+    1. Publicar los datos en Django
+    2. Obtener los datos mediante Axios
+    3. Enviarlos a la aplicacion
 
 

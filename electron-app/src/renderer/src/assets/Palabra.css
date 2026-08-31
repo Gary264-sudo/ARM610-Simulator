@@ -1,0 +1,25 @@
+.PalabraCss{
+    border: 1px solid;
+    border-color: black;
+    height: 10px;
+    margin: auto;
+    display: flex;
+
+    .DireccionByte{
+        width: 10px;
+        border-right: 1px solid;
+        border-color: black;
+    }
+    .COP{
+        width: 10px;
+        border-left: 1px solid;
+        border-right: 1px solid;
+        border-color: black;
+    }
+    .DireccionDato{
+        width: 10px;
+        border-left: 1px solid;
+        border-right: 1px solid;
+        border-color: black;
+    }
+}
