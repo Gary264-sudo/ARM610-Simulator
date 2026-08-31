@@ -26,7 +26,7 @@ function ARM6(){
 
     // Las funciones de axios pueden ser async, puesto que es una libreria basado en promesas, lo que se alinea con las funciones async
     const changeValuePC = async () => {
-        const res = await axios.get("http://127.0.0.1:8000/ARM6_api1/PCvalue/", { params: {
+        const res = await axios.get("http://127.0.0.1:8000/PCvalue/", { params: {
             input: (document.getElementById('input_PC') as HTMLInputElement).value
         }});
 
@@ -43,7 +43,7 @@ function ARM6(){
                 <div className="PC">
                     <p className="PCHeader">Program Counter</p>
                     <div className="CounterFormat" id="CF">
-                        <div className="valuePC_hex" id="valuePC_hex_JS">{valuePC_hex}</div>
+                        <p className="valuePC_hex" id="valuePC_hex_JS">{valuePC_hex}</p>
                     </div>
                     <input id="input_PC" type="text"></input>
                     <button id="buttonValuePC" onClick={changeValuePC}>Inserte el valor del PC</button>

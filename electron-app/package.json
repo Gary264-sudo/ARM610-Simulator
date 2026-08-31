@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "An Electron application with React and TypeScript",
   "main": "./out/main/index.js",
+  "Content-Security-Policy": "script-src 'self' http://127.0.0.1:8000",
   "author": "example.com",
   "homepage": "https://electron-vite.org",
   "scripts": {

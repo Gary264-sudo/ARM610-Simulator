@@ -33,6 +33,49 @@ add path('', include(API.urls)), in \site_python\site_python\urls.py
 
 npm install axios
 
+python manage.py runserver (Inicializar el servidor de Django)
+
+De manera de prevenir el error de Content Security Policy (https://www.electronjs.org/docs/latest/tutorial/security#7-define-a-content-security-policy)
+<meta
+      http-equiv="Content-Security-Policy"
+      content="connect-src 'self' http://127.0.0.1:8000 'unsafe-eval';
+        default-src 'self'; 
+        script-src 'self';
+        style-src 'self' 'unsafe-inline';
+        img-src 'self' data:"
+    />
+
+De manera de prevenir el error de XMLHttpRequest
+"Access to XMLHttpRequest at 'http://127.0.0.1:8000/PCvalue/?input=10' from origin 'http://localhost:5173' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource."
+
+const UpsertKeyValue = (obj : any, keyToChange : string, value : string[]) => {
+  const keyToChangeLower = keyToChange.toLowerCase();
+  for (const key of Object.keys(obj)) {
+    if(key.toLowerCase() === keyToChangeLower) {
+      obj[key] = value;
+      return;
+    }
+  }
+  obj[keyToChange] = value;
+}
+
+mainWindow.webContents.session.webRequest.onBeforeSendHeaders((details, callback) => {
+      const { requestHeaders } = details;
+      UpsertKeyValue(requestHeaders, 'Access-Control-Allow-Origin', ['*']);
+      callback({ requestHeaders });
+    },
+  );
+
+  mainWindow.webContents.session.webRequest.onHeadersReceived((details, callback) => {
+    const { responseHeaders } = details;
+    UpsertKeyValue(responseHeaders, 'Access-Control-Allow-Origin', ['*']);
+    UpsertKeyValue(responseHeaders, 'Access-Control-Allow-Origin', ['*']);
+    callback({
+      responseHeaders,
+    });
+  });
+
 4. 
+
 
 

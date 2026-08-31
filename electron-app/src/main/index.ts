@@ -25,6 +25,17 @@ const initiateOrderDjango = () => {
   return djangoOrder;
 }
 
+const UpsertKeyValue = (obj : any, keyToChange : string, value : string[]) => {
+  const keyToChangeLower = keyToChange.toLowerCase();
+  for (const key of Object.keys(obj)) {
+    if(key.toLowerCase() === keyToChangeLower) {
+      obj[key] = value;
+      return;
+    }
+  }
+  obj[keyToChange] = value;
+}
+
 function createWindow(): void {
   initiateOrderDjango();
 
@@ -49,6 +60,22 @@ function createWindow(): void {
     shell.openExternal(details.url)
     return { action: 'deny' }
   })
+
+  mainWindow.webContents.session.webRequest.onBeforeSendHeaders((details, callback) => {
+      const { requestHeaders } = details;
+      UpsertKeyValue(requestHeaders, 'Access-Control-Allow-Origin', ['*']);
+      callback({ requestHeaders });
+    },
+  );
+
+  mainWindow.webContents.session.webRequest.onHeadersReceived((details, callback) => {
+    const { responseHeaders } = details;
+    UpsertKeyValue(responseHeaders, 'Access-Control-Allow-Origin', ['*']);
+    UpsertKeyValue(responseHeaders, 'Access-Control-Allow-Origin', ['*']);
+    callback({
+      responseHeaders,
+    });
+  });
 
   // HMR for renderer base on electron-vite cli.
   // Load the remote URL for development or the local html file for production.
