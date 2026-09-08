@@ -1,3 +1,10 @@
+Semana 1: Setting up the environment
+Semana 2: Creacion del ensamblador
+ - Funcionamiento de un ensamblador (absoluto)
+ - Funcionamiento de un compilador (relativo)
+ - Funcionamiento de un interpretador (relativo)
+Semana 3: 
+
 (https://ivanyu2021.hashnode.dev/electron-django-desktop-app-integrate-javascript-and-python)
 1. Create a Electron project
 

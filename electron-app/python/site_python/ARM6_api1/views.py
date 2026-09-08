@@ -13,6 +13,11 @@ from rest_framework.response import Response
 # Dynamic template: Es una pagina que tiene cambios debido a una funcion en particular
 
 reloj = {0, 0, 0, 0, 0, 0, 0, 0}
+counter = 0
+
+# Si el reloj tuviese un segundo pulso de reloj, se realiza el incremento del PC
+#if(reloj[2] == 1):
+#    counter = counter + 1
 
 @api_view(('GET',))
 @action(methods=['GET'], detail = False, name='Get value from input')
@@ -23,33 +28,29 @@ def get_val_from(self, request):
     input = request.GET['input2']
     return HttpResponse(data = input)
 
+def Assembler():
+    pass
+
 @api_view(('GET',))
 @action(methods=['GET'], detail = False, name='Get value from input')
-def Compiler(request):
-    script = request.GET['text']
+def Loader(request):
+    source_file = request.GET['text']
 
-    line_code = []
+    # Carga, relocaliza, linkea y comienza el programa (proceso de la CPU) en base a varios object_files
+    executable_module = [] # conjunto de object files
+    object_file = Assembler(source_file)
+    executable_module += object_file
 
-    first_check = script.split(" ", 3)
-    for check in first_check:
-        command = check.split("\r\n")
-        line_code.append(command)
-
-    return Response(status=status.HTTP_200_OK, data = line_code)
+    return Response(status=status.HTTP_200_OK, data = object_file)
 
 @api_view(('GET',))
 @action(methods=['GET'], detail = False, name='Get value from input')
 def PCvalue(request):
     # El PC tiene un tamaño de 12 bits
     # Esta sincronizado por el generador de pulsos de reloj
-
-    input = request.GET['input']
-        
-    # Si el reloj tuviese un segundo pulso de reloj, se realiza el incremento del PC
-    # if(reloj[2] == 1):
-    #     count = count + 1
+    counter = request.GET['input']
     
-    return Response(status=status.HTTP_200_OK, data = input)
+    return Response(status=status.HTTP_200_OK, data = counter)
 
 def IR(self, request):
     input = request.GET['input3']

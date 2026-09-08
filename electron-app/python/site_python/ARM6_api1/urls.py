@@ -14,7 +14,7 @@ urlpatterns = [
     #  - name significa el nombre del URL (se recomienda el mismo nombre que el URL)
     path('', views.index, name='index'),
     path('PCvalue/', views.PCvalue, name='PC'),
-    path('MP_ram/', views.Compiler, name='MP_ram'),
+    path('MP_ram/', views.Loader, name='MP_ram'),
 
     # Por ejemplo:
     # '/MMU' significa que es un URL especifico

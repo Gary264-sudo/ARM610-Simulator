@@ -40,6 +40,7 @@ function MemoriaPrincipal() {
                 {/* Single Data transfer: LDR, STR */}
                 {/* Arithmetic Operations: ADC, ADD, MUL, SBC, SUB */}
                 {/* Logic Operations: AND, EOR, ORR */}
+                {/* XOR de manera de obtener el complemento de un numero */}
 
                 <p className="RAMheader">Memoria Principal: RAM</p>
                 <div className="RAM">
