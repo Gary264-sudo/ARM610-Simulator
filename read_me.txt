@@ -1,9 +1,8 @@
 Semana 1: Setting up the environment
 Semana 2: Creacion del ensamblador
- - Funcionamiento de un ensamblador (absoluto)
- - Funcionamiento de un compilador (relativo)
- - Funcionamiento de un interpretador (relativo)
+ - Conocimiento del funcionamiento de un ensamblador (absoluto)
 Semana 3: 
+ - Construccion del ensamblador
 
 (https://ivanyu2021.hashnode.dev/electron-django-desktop-app-integrate-javascript-and-python)
 1. Create a Electron project
@@ -88,4 +87,11 @@ La manera en como se envian los datos mediante las APIs de Django hacia la aplic
     2. Obtener los datos mediante Axios
     3. Enviarlos a la aplicacion
 
+5. Acerca del ensamblador
+Usualmente el ensamblador tiene dos identification bits de manera de detectar cuatro tipos especificos por instruccion:
+ - 00: absolute machine instruction
+ - 01: relative machine instruction
+ - 10: machine instruction that requires special relocation.
+ - 11: a loader directive
+En este caso, en lugar de realizarse por instruccion, se ha realizado por operando.
 
