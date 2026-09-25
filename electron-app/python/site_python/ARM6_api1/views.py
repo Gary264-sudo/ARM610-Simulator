@@ -36,9 +36,10 @@ def Assembler():
 def Loader(request):
     source_file = request.GET['text']
 
-    # Carga, relocaliza, linkea y comienza el programa (proceso de la CPU) en base a varios object_files
     executable_module = [] # conjunto de object files
+    
     object_file = Assembler(source_file)
+
     executable_module += object_file
 
     return Response(status=status.HTTP_200_OK, data = object_file)

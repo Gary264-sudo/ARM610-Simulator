@@ -1,3 +1,5 @@
+from views import counter
+
 # Las animaciones de las lineas seguirian las microoperaciones de ejecucion (Por ejemplo, linea DATA -> MAR)
 # El orden de la animacion esta definidio en fetch y decode por un orden establecido, mientras que en execute
 # se realizaria siguiendo los pasos de las microoperaciones de cada mnemonico del COP
@@ -46,7 +48,8 @@ def index(dictionary, index):
 
 # Label y directive pueden ser valores nulos
 class instruction:
-    def __init__(self, mnemonic, register, operand2, mode):
+    def __init__(self, LocationCounter, register, operand2, mode):
+        self.lc = LocationCounter
         self.label = ""
         self.directive = ""
         self.inmediateOperand = 0b1 # Si self.operand2: self.inmediateOperand = 0b0, indicando que existe
@@ -60,15 +63,20 @@ class instruction:
                 'operand': bin(index(registers, operand2)),
                 'identificationBits': 0b00
             }
+        elif bin(operand2) <= 0b11111111: 
+            self.operand2 = {
+                'Rotate': 0b0000,
+                'operand': bin(operand2),
+                'identificationBits': 0b00
+            }
+        # operand2 not in registers permite aplicar una condicional de strings
+        elif type(operand2) is type("string") and operand2 not in registers:
+            self.operand2 = {
+                'operand': operand2,
+                'identificationBits': 0b00
+            }
         else:
-            if bin(operand2) <= 0b11111111: 
-                self.operand2 = {
-                    'Rotate': 0b0000,
-                    'operand': bin(operand2),
-                    'identificationBits': 0b00
-                }
-            else:
-                print("El numero debe ser un valor inmediato de 8 bits no signado")
+            print("El operando debe ser valido")
         # self.comment = ""
         self.mode = mode
         self.displacement = 0b0000000000
@@ -91,9 +99,42 @@ class instruction:
 
 # Linked list
 class Node:
-    def __init__(self, data):
+    def __init__(self, name, data, type):
+        self.name = name
         self.data = data
+        self.type = type
         self.next = None
+
+SymbolTable = []
+
+def searchSymbolTable(ins):
+    while node:
+        if ins.operand2 == node.type:
+            
+        else:
+            node = node.next
+    
+    # Si fuese un label que no estuviese en el SymbolTable
+    if type(ins.label) == type("string"):
+        node = Node(ins.operand2["operand"], ins.loc, "D")
+        node.next = searchSymbolTable()
+    # 
+    elif ins.operand2["operand"] == "U":
+        node = Node(ins.operand2["operand"], ins.loc, "U")
+        node.type = "D"
+    else:
+        print("Label is doubly defined")
+        OnePassAssembler()
+
+
+def scanSymbolTable():
+    for symbol in SymbolTable:
+        if symbol.node.type != "U":
+            print("Compilacion exitosa")
+            break
+        else:
+            print("Error! Undefined Symbol")
+            break
 
 def convertir(script):
     # line_code seria un array bidimensional
@@ -118,28 +159,19 @@ def convertir(script):
     return line_code
 
 instructions = []
-def lexicalScanRoutine(object_code):
-    # Label -> LOOP: (Si tuviese ":" en linea, se considera un label.
-    #                   Unicamente puede haber un label por linea y debe ser el primer elemento del array
-    #                   Una vez que se extrae, se elimina el ":" de manera de insertarlo en la clase Instruction)
-    # Directive -> (Si la directiva no estuviese en el segundo elemento del array, no se coloca)
-    # mnemonic -> (Si mnemnic no estuviese en el primer, segundo o tercer elemento del array, no se coloca)
-    # Operand1 -> (Si el operand1 no estuviese en el segundo al quinto elemento del array, no se coloca)
-    # Operand2 -> (Si no hubiese un Operand1, no se coloca)
-    # Operand3 -> (Si no hubiese un Operand2, no se coloca)
-    # Comment -> (Si tuviese un ";" en linea, se considera un comentario.
-    #               Una vez que se extrae, se elimina el ";" de manera de insertarlo en la clase Instruction)
-    # mode -> 
-    # displacement -> 
-    # Relocation bit -> 
+def lexicalScanRoutine(object_code): 
+    # Almacena la direccion en que la instruccion se cargara. Es decir, la direccion actual, pero no la instruccion
+    # Tan solo muestra donde la instruccion sera eventualmente cargada
+    # Cada vez que se compila el programa, se reinicia.
+    LocationCounter = counter
     
     object_code = [ ["LOOP", "AND", "R0", "R1", "", "", "", "", "", ""],
                    ["", "", "", "", "", "", "", "", "", ""] ]
-
-    # Inicializacion de la instruccion
-    instructionScan = instruction("", "", 1)
     
     for line in range(len(object_code)):
+        # Inicializacion de la instruccion
+        instructionScan = instruction(LocationCounter + object_code.index(line), "", "", 1)
+
         for column in range(len(object_code[line])):
             # Label
             if ":" in object_code[line][0]:
@@ -204,6 +236,7 @@ def lexicalScanRoutine(object_code):
             # Displacement
         
         instructions.append(instructionScan.get_list())
+        LocationCounter = 
 
 # Table Search Procedures:
 
@@ -233,12 +266,6 @@ OpCodeTable = {
     }
 }
 
-# SymbolTable sera un dynamic table, es decir, una lista dinamica (compuesto de )
-# Si hubiese algun simbolo con un type de Undefined, una vez que se haya leido todo el script, se imprime
-# "ha fallado el programa".
-# Si hubiese una instruccion sin un label en el Symbol Table, se crea un Linked List
-SymbolTable = []
-
 # DirectiveTable es una static data structure: se aplicara un nested dictionary
 DirectiveTable = {
     "COMMENT",
@@ -250,29 +277,10 @@ DirectiveTable = {
 # un two-pass assembler, puesto que genera un relocatable object file que sera cargado en memoria por Loader.
 mode = [1, 2, 3, 4, 5, 6]
 def OnePassAssembler():
-    # El ensamblador no carga las instrucciones en memoria, sino que las escribe en un object file
-    # que sera cargado en memoria por el Loader.
-    
-    script = "MOV AH\r\nDEL FE"
-    object_code = convertir(script)
-
-    for line in object_code:
-        instruction(, mode[1])
-
-
-    # Almacena la direccion en que la instruccion se cargara. Es decir, la direccion actual, pero no la instruccion
-    # Tan solo muestra donde la instruccion sera eventualmente cargada
-    # Cada vez que se compila el programa, se reinicia.
-    LocationCounter = counter
-
-    line_code[LocationCounter]
-
     # Resolucion de multiply-defined labels
     #if(instruction.label == SymbolTable.label):
     #    append("name", NUL, "MTDF")
-    
-    # 
-    
+
     # El puntero sera almacenado en un registro o localizacion de memoria, y sera usado para encontrar la siguiente instruccion incompleta
     # register()
     for index in instructions:
@@ -283,6 +291,21 @@ def OnePassAssembler():
         elif instruction.mnemonic == "ORR":
             operationORR()
         else: 
+
+    # Lexical Scan Routine     
+    script = "MOV AH\r\nDEL FE"
+    object_code = convertir(script)
+    
+    for ins in instructions:
+        # End of file
+        if instructions.index(ins) == len(instructions):
+            scanSymbolTable()
+        else:
+            if range(len(ins.label)) > range(len("")):
+                searchSymbolTable()
+            else:
+                if ins.operand2 != 
+        
 
     return command
 
