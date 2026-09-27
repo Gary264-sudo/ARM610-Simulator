@@ -40,6 +40,7 @@ from views import counter
 #                   Linked List sera True y coloca el LC del nodo siguiente)
 
 mode = ["User mode", "FIQ mode", "IRQ mode", "Supervisor mode", "Abort mode", "Undefined mode"]
+mode = [1, 2, 3, 4, 5, 6]
 
 def index(dictionary, index):
     new_list = list(dictionary.keys())
@@ -108,28 +109,56 @@ class Node:
 SymbolTable = []
 
 def searchSymbolTable(ins):
-    while node:
-        if ins.operand2 == node.type:
-            
-        else:
-            node = node.next
-    
-    # Si fuese un label que no estuviese en el SymbolTable
-    if type(ins.label) == type("string"):
-        node = Node(ins.operand2["operand"], ins.loc, "D")
-        node.next = searchSymbolTable()
-    # 
-    elif ins.operand2["operand"] == "U":
-        node = Node(ins.operand2["operand"], ins.loc, "U")
-        node.type = "D"
-    else:
-        print("Label is doubly defined")
-        OnePassAssembler()
 
+    # Primera columna: Nodos Defined
+    if not SymbolTable:
+        nodeD = Node(ins.name, ins.loc, "D")
+        SymbolTable.append(nodeD)
+    else:
+        node = SymbolTable[0]
+        while node:
+            if node.type != None:
+                node = node.next
+            else:
+                nodeD = Node(ins.operand2["operand"], ins.loc, "D")
+                node.next = nodeD
+    
+    # Search Symbol Table
+    for symbol in SymbolTable:
+        # Continue searching
+        indice = SymbolTable.index(symbol)
+        if ins.operand2["operand"] not in symbol:
+            continue
+        # found
+        else:
+            # Type = D
+            if node.type == "D":
+                assembleLine()
+                break
+            else:
+                # Realizar el punto 7
+                pass
+    
+    # Not found
+    for symbol in SymbolTable:
+        if ins.operand2["operand"] not in symbol:
+            nodeU = Node(ins.operand2["operand"], ins.loc, "U")
+            SymbolTable.append(nodeU)
+        else:
+            continue
+
+        if indice == len(SymbolTable) - 1:
+            nodeU = Node(ins.operand2["operand"], ins.loc, "U")
+            SymbolTable.append(nodeU)
+            break
+    
+    #else:
+    #   print("Label is doubly defined")
+    #   OnePassAssembler()
 
 def scanSymbolTable():
     for symbol in SymbolTable:
-        if symbol.node.type != "U":
+        if symbol.type != "U":
             print("Compilacion exitosa")
             break
         else:
@@ -157,6 +186,9 @@ def convertir(script):
                 line_code.append(command)
 
     return line_code
+
+def assembleLine():
+    pass
 
 instructions = []
 def lexicalScanRoutine(object_code): 
@@ -275,7 +307,6 @@ DirectiveTable = {
 
 # Este es un one-pass assembler que lee el source file una vez. Unicamente que tambien funciona como si fuese
 # un two-pass assembler, puesto que genera un relocatable object file que sera cargado en memoria por Loader.
-mode = [1, 2, 3, 4, 5, 6]
 def OnePassAssembler():
     # Resolucion de multiply-defined labels
     #if(instruction.label == SymbolTable.label):
@@ -301,11 +332,15 @@ def OnePassAssembler():
         if instructions.index(ins) == len(instructions):
             scanSymbolTable()
         else:
+            # Label Defined
             if range(len(ins.label)) > range(len("")):
-                searchSymbolTable()
+                searchSymbolTable(1)
             else:
-                if ins.operand2 != 
-        
+                # A Symbol used
+                if ins.operand2["operand"] == type("string"):
+                    searchSymbolTable(2)
+                else:
+                    assembleLine(ins)
 
     return command
 
