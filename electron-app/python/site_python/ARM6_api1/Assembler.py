@@ -9,38 +9,14 @@ from views import counter
 # 2.- Extraer las lineas de codigo (Clasificarlos segun estructura de la instruccion por cada linea de codigo)
 # 3.- Establecer el SymbolTable (Linked List de los Future Symbols)
 # 4.- Realizar las operaciones
-# 5.- 
-# 6.- 
 
 # Opcion de exportar e importar (object files)
-
-# Estructura de la instruccion:
-# Label (Can be Null).
-# Directives (Can be Null)
-# Mnemonic of OpCode
-# Operand 1 (It's obligatory)
-#   00 - Absolute Instruction
-#   01 - Relocatable instruction
-#   10 - Special relocation
-#   11 - Loader directives
-# Operand 2 (Can be Null)
-#   00 - Absolute Instruction
-#   01 - Relocatable instruction
-#   10 - Special relocation
-#   11 - Loader directives
-# Operand 3 (Can be Null)
-#   00 - Absolute Instruction
-#   01 - Relocatable instruction
-#   10 - Special relocation
-#   11 - Loader directives
-# Comment
-# Mode (User mode, FIQ mode, IRQ mode, Supervisor mode, Abort mode, Undefined mode)
-# Displacement (Offset -> 8-12 bits)
-# Relocation bit (True or False: Basicamente si pertenece a el operando a un
-#                   Linked List sera True y coloca el LC del nodo siguiente)
+# Problemas de codigo
+# 1. Formato de instrucciones
+# 2. Analizador Lexico (Adaptarlo a todos los formatos de instrucciones sin hardcodear)
+# 3. Finalizar SearchSymbolTable
 
 mode = ["User mode", "FIQ mode", "IRQ mode", "Supervisor mode", "Abort mode", "Undefined mode"]
-mode = [1, 2, 3, 4, 5, 6]
 
 def index(dictionary, index):
     new_list = list(dictionary.keys())
@@ -49,48 +25,104 @@ def index(dictionary, index):
 
 # Label y directive pueden ser valores nulos
 class instruction:
-    def __init__(self, LocationCounter, register, operand2, mode):
-        self.lc = LocationCounter
-        self.label = ""
-        self.directive = ""
-        self.inmediateOperand = 0b1 # Si self.operand2: self.inmediateOperand = 0b0, indicando que existe
-        self.mnemonic = 0b0000
-        self.conditionCode = 0b0 # Si set condition code (1000, 1001, 1010, 1011 entonces es 1, de otra manera es 0)
-        self.operandRegister = register # Siempre sera un registro de donde provenga el operando 1
-        self.destinationRegister = 0b0000 # Siempre sera un registro destino
-        if operand2 in registers: # Siempre sera el operando 2
-            self.operand2 = {
-                'Shift': 0b00000000,
-                'operand': bin(index(registers, operand2)),
-                'identificationBits': 0b00
-            }
-        elif bin(operand2) <= 0b11111111: 
-            self.operand2 = {
-                'Rotate': 0b0000,
-                'operand': bin(operand2),
-                'identificationBits': 0b00
-            }
-        # operand2 not in registers permite aplicar una condicional de strings
-        elif type(operand2) is type("string") and operand2 not in registers:
-            self.operand2 = {
-                'operand': operand2,
-                'identificationBits': 0b00
-            }
-        else:
-            print("El operando debe ser valido")
-        # self.comment = ""
-        self.mode = mode
-        self.displacement = 0b0000000000
+    def __init__(self, LocationCounter, mnemonic, register, operand2, mode):
+        # Data Processing:
+        for operation in OpCodeTable[0]:
+            if mnemonic == operation:
+                self.lc = LocationCounter
+                self.label = ""
+                self.directive = ""
+                self.inmediateOperand = 0b1 # Si self.operand2: self.inmediateOperand = 0b0, indicando que existe
+                self.mnemonic = bin(index(OpCodeTable, mnemonic)["OpCode"])
+                self.conditionCode = 0b0 # Si set condition code (1000, 1001, 1010, 1011 entonces es 1, de otra manera es 0)
+                self.operandRegister = register # Siempre sera un registro de donde provenga el operando 1
+                self.destinationRegister = 0b0000 # Siempre sera un registro destino
+                if operand2 in registers: # Siempre sera el operando 2
+                    self.operand2 = {
+                        'Shift': 0b00000000,
+                        'operand': bin(index(registers, operand2)),
+                        'identificationBits': 0b00
+                    }
+                elif bin(operand2) <= 0b11111111: 
+                    self.operand2 = {
+                        'Rotate': 0b0000,
+                        'operand': bin(operand2),
+                        'identificationBits': 0b00
+                    }
+                # operand2 not in registers permite aplicar una condicional de strings
+                elif type(operand2) is type("string") and operand2 not in registers:
+                    self.operand2 = {
+                        'operand': operand2,
+                        'identificationBits': 0b00
+                    }
+                else:
+                    print("El operando debe ser valido")
+                # self.comment = ""
+                self.mode = mode
+                self.displacement = 0b0000000000
 
-        # Labels normally have a maximum size (typically 6 or 8 characters), must start with a letter,
-        # and may only consist of letters, digits, and a few other characters.
-        if(len(self.label) >= 8):
-            for letra in abecedario:
-                if(str(self.label)[0] != letra):
-                    print("El label no es valido")
+                # Labels normally have a maximum size (typically 6 or 8 characters), must start with a letter,
+                # and may only consist of letters, digits, and a few other characters.
+                if(len(self.label) >= 8):
+                    for letra in abecedario:
+                        if(str(self.label)[0] != letra):
+                            print("El label no es valido")
+                
+                #if(self.displacement > 127 & self.displacement < 0):
+                #    print("El displacement no es valido")
+
+        # Multiply - Multiply Accumulate:
+        for operation in OpCodeTable[1]:
+            if mnemonic == operation:
+                self.lc = LocationCounter
+                self.label = ""
+                self.directive = ""
+                self.condition = 0b0000
+                self.mnemonic = bin(index(OpCodeTable, mnemonic)["OpCode"])
+                self.accumulate = 0b0
+                self.conditionCode = 0b0 # Si set condition code (1000, 1001, 1010, 1011 entonces es 1, de otra manera es 0)
+                self.destinationRegister = 0b0000 # Siempre sera un registro destino
+                self.operandRegister1 = register
+                self.operandRegister2 = register
+                self.operandRegister3 = register
+                # self.comment = ""
+                self.mode = mode
+                self.displacement = 0b0000000000
         
-        #if(self.displacement > 127 & self.displacement < 0):
-        #    print("El displacement no es valido")
+        # Single Data Transfer:
+        for operation in OpCodeTable[2]:
+            if mnemonic == operation:
+                self.lc = LocationCounter
+                self.label = ""
+                self.directive = ""
+                self.inmediateOperand = 0b1 # Si self.operand2: self.inmediateOperand = 0b0, indicando que existe
+                self.mnemonic = bin(index(OpCodeTable, mnemonic)["OpCode"])
+                self.conditionCode = 0b0 # Si set condition code (1000, 1001, 1010, 1011 entonces es 1, de otra manera es 0)
+                self.operandRegister = register # Siempre sera un registro de donde provenga el operando 1
+                self.destinationRegister = 0b0000 # Siempre sera un registro destino
+                if operand2 in registers: # Siempre sera el operando 2
+                    self.operand2 = {
+                        'Shift': 0b00000000,
+                        'operand': bin(index(registers, operand2)),
+                        'identificationBits': 0b00
+                    }
+                elif bin(operand2) <= 0b11111111: 
+                    self.operand2 = {
+                        'Rotate': 0b0000,
+                        'operand': bin(operand2),
+                        'identificationBits': 0b00
+                    }
+                # operand2 not in registers permite aplicar una condicional de strings
+                elif type(operand2) is type("string") and operand2 not in registers:
+                    self.operand2 = {
+                        'operand': operand2,
+                        'identificationBits': 0b00
+                    }
+                else:
+                    print("El operando debe ser valido")
+                # self.comment = ""
+                self.mode = mode
+                self.displacement = 0b0000000000
 
     def get_list(self):
         return [self.label, self.directive, self.mnemonic, self.operand1, self.operand2, self.operand3, self.comment, self.mode, self.displacement]
@@ -105,52 +137,64 @@ class Node:
         self.data = data
         self.type = type
         self.next = None
+    
+    def get_node(self, index):
+        count = 0
+        if index == 0:
+            return self
+        else:
+            while count != index:
+                count = count + 1
+                self = self.next
+            return self
 
 SymbolTable = []
 
-def searchSymbolTable(ins):
-
+def searchSymbolTable(ins, state):
     # Primera columna: Nodos Defined
-    if not SymbolTable:
-        nodeD = Node(ins.name, ins.loc, "D")
-        SymbolTable.append(nodeD)
-    else:
-        node = SymbolTable[0]
-        while node:
-            if node.type != None:
-                node = node.next
-            else:
-                nodeD = Node(ins.operand2["operand"], ins.loc, "D")
-                node.next = nodeD
-    
-    # Search Symbol Table
-    for symbol in SymbolTable:
-        # Continue searching
-        indice = SymbolTable.index(symbol)
-        if ins.operand2["operand"] not in symbol:
-            continue
-        # found
+    if state == "D":
+        if not SymbolTable:
+            nodeD = Node(ins.name, ins.loc, "D")
+            SymbolTable.append(nodeD)
         else:
-            # Type = D
-            if node.type == "D":
-                assembleLine()
-                break
-            else:
-                # Realizar el punto 7
-                pass
-    
-    # Not found
-    for symbol in SymbolTable:
-        if ins.operand2["operand"] not in symbol:
-            nodeU = Node(ins.operand2["operand"], ins.loc, "U")
-            SymbolTable.append(nodeU)
-        else:
-            continue
+            node = SymbolTable[0]
+            while node:
+                if node.type != None:
+                    node = node.next
+                else:
+                    nodeD = Node(ins.operand2["operand"], ins.loc, "D")
+                    node.next = nodeD
 
-        if indice == len(SymbolTable) - 1:
-            nodeU = Node(ins.operand2["operand"], ins.loc, "U")
-            SymbolTable.append(nodeU)
-            break
+    # Search Symbol Table
+    elif state == "S":
+        for symbol in SymbolTable:
+            indice = SymbolTable.index(symbol)
+            node = symbol
+
+            while node:
+                if node.type != None:
+                    # Continue searching
+                    if ins.operand2["operand"] not in node.data:
+                        continue
+                    # Not found: Nodo Undefined
+                    elif indice == len(SymbolTable) - 1 and ins.operand2["operand"] not in node.data:
+                        nodeU = Node(ins.operand2["operand"], ins.loc, "U")
+                        SymbolTable.append(nodeU)
+                    # Found: Esta en Linked List de Nodos Defined
+                    elif ins.operand2["operand"] in node.data and node.type == "D":
+                        if node.type == "D":
+                            assembleLine() # Hace la operacion
+                            break
+                        else:
+                            # Realizar el punto 7
+                            pass
+                    # Found: Esta en Linked List de Nodos Undefined
+                    elif ins.operand2["operand"] in node.data and node.type == "U":
+                        # Type = U
+                        if node.type == "U":
+                            nodoU = Node(ins.operand2["operand"], ins.loc, "U")
+                            nodo = SymbolTable[symbol]
+                    node = node.next
     
     #else:
     #   print("Label is doubly defined")
@@ -197,13 +241,23 @@ def lexicalScanRoutine(object_code):
     # Cada vez que se compila el programa, se reinicia.
     LocationCounter = counter
     
-    object_code = [ ["LOOP", "AND", "R0", "R1", "", "", "", "", "", ""],
+    object_code = [ ["LOOP:", "AND", "R0", "R1", "", "", "", "", "", ""],
                    ["", "", "", "", "", "", "", "", "", ""] ]
     
     for line in range(len(object_code)):
         # Inicializacion de la instruccion
         instructionScan = instruction(LocationCounter + object_code.index(line), "", "", 1)
 
+        for column in range(len(object_code[line])):
+            for key in OpCodeTable:
+                for operation in OpCodeTable[key]:
+                    if object_code[line][column] == operation and key == 0:
+                        
+                        instructions.append(instructionScan.get_list())
+                    elif object_code[line][column] == operation and key == 1:
+                        instructions.append(instructionScan.get_list())
+                    elif object_code[line][column] == operation and key == 2:
+                        instructions.append(instructionScan.get_list())
         for column in range(len(object_code[line])):
             # Label
             if ":" in object_code[line][0]:
@@ -272,29 +326,69 @@ def lexicalScanRoutine(object_code):
 
 # Table Search Procedures:
 
-# El OpCodeTable es una static data structure: se aplicara un nested dictionary
-# Cada source line tendra cuatro campos: mnemonic, OpCode, type, length
 # {/* ARM Instruction set */}
-# {/* Branch and Branch with Link: B, BL */}
-# {/* Single Data transfer: LDR, STR */}
-# {/* Arithmetic Operations: ADC, ADD, MUL, SBC, SUB */}
-# {/* Logic Operations: AND, EOR, ORR */}
-# {/* XOR de manera de obtener el complemento de un numero */}
+# Data Processing Instruction:
+#  1. MOV, MVN
+#  2. Operaciones aritmeticas: ADC, SBC
+#  3. Operaciones logicas: AND, EOR, ORR
+# Multiply and Multiply-Accumulate:
+# 1. MUL, MLA
+# Single Data Transfer:
+# 1. LDR, STR
 OpCodeTable = {
-    "AND": {
-        "OpCode": "0",
-        "type": "RR",
-        "length": 5,
-    }, 
-    "EOR": {
-        "OpCode": "1",
-        "type": "RR",
-        "length": 5,
+    # Data Processing: Operaciones logicas
+    0 : {
+        "AND": {
+            "OpCode": 0b0000,
+            "type": "RR",
+            "length": 5,
+        }, 
+        "EOR": {
+            "OpCode": 0b0001,
+            "type": "RR",
+            "length": 5,
+        },
+        "ORR": {
+            "OpCode": 0b0010,
+            "type": "RR",
+            "length": 2,
+        },
+        "ADC": {
+            "OpCode": 0b0011,
+            "type": "RR",
+            "length": 5
+        },
+        "SBC": {
+            "OpCode": 0b0100,
+            "type": "RR",
+            "length": 5
+        }
     },
-    "ORR": {
-        "OpCode": "1",
-        "type": "RR",
-        "length": 2,
+    # Multiply - Multiply Accumulate:
+    1 : {
+        "MUL": {
+            "OpCode": 0b0101,
+            "type": "RR",
+            "length": 4
+        },
+        "MLA": {
+            "OpCode": 0b0110,
+            "type": "RR",
+            "length": 2
+        }
+    },
+    # Single Data Transfer:
+    2: {
+        "LDR": {
+            "OpCode": 0b0111,
+            "type": "RR",
+            "length": 2
+        },
+        "STR": {
+            "OpCode": 0b1000,
+            "type": "RR",
+            "length": 3
+        }
     }
 }
 
@@ -312,9 +406,11 @@ def OnePassAssembler():
     #if(instruction.label == SymbolTable.label):
     #    append("name", NUL, "MTDF")
 
+    # STR R2, #2
+    # ADC R1, R2, #3
+
     # El puntero sera almacenado en un registro o localizacion de memoria, y sera usado para encontrar la siguiente instruccion incompleta
-    # register()
-    for index in instructions:
+    for instruction in instructions:
         if instructions[index.mnemonic] == "AND":
             operationAND()
         elif instruction.mnemonic == "EOR":
@@ -334,13 +430,11 @@ def OnePassAssembler():
         else:
             # Label Defined
             if range(len(ins.label)) > range(len("")):
-                searchSymbolTable(1)
+                searchSymbolTable(ins, "D")
             else:
                 # A Symbol used
                 if ins.operand2["operand"] == type("string"):
-                    searchSymbolTable(2)
-                else:
-                    assembleLine(ins)
+                    searchSymbolTable(ins, "S")
 
     return command
 
