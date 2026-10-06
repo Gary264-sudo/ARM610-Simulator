@@ -89,24 +89,31 @@ def index(dictionary, index):
     index_position = new_list.index(index)
     return index_position
 
+# Entendible, Enfocarse en la reusabilidad. Mal si son dificiles de modificar
+# 1. Definir variables e insertarlo en la clase (permite definir if's, aunque no declarar los tipos)
+# Comentario en la documentacion:
+# La principal razon por la que se aplica una clase en lugar de un diccionario es debido a que permite declarar
+# tipos en cada clase distinta que son instances variables que no comparten el mismo valor, aparte de que permite
+# mas funcionalidades tales como poder colocar condicionales
+
 class instructionDataProcessing:
-    def __init__(self, LocationCounter, mnemonic, register1, register2, operand2, mode):
+    def __init__(self, LocationCounter, label, directive, mnemonic, operandRegister, destinationRegister, operand2, comment, mode):
         # Data Processing:
-        self.lc = LocationCounter
-        self.label = ""
-        self.directive = ""
-        self.inmediateOperand = 0b1 # Si self.operand2: self.inmediateOperand = 0b0, indicando que existe
-        self.mnemonic = bin(index(OpCodeTable[0], mnemonic))
-        self.conditionCode = 0b0 # Si set condition code (1000, 1001, 1010, 1011 entonces es 1, de otra manera es 0)
-        self.operandRegister = register1 # Siempre sera un registro de donde provenga el operando 1
-        self.destinationRegister = register2 # Siempre sera un registro destino
+        self.lc: int = LocationCounter
+        self.label: str = label
+        self.directive: str = directive
+        self.inmediateOperand: bin = 0b1 # Si self.operand2: self.inmediateOperand = 0b0, indicando que existe
+        self.mnemonic: bin = bin(index(OpCodeTable[0], mnemonic))
+        self.conditionCode: bin = 0b0 # Si set condition code (1000, 1001, 1010, 1011 entonces es 1, de otra manera es 0)
+        self.operandRegister: bin = bin(registers[operandRegister]) # Siempre sera un registro de donde provenga el operando 1
+        self.destinationRegister: bin = bin(registers[destinationRegister]) # Siempre sera un registro destino
         if operand2 in registers: # Siempre sera el operando 2
             self.operand2 = {
                 'Shift': {
                     'Shift amount': 0b00000,
                     'Shift type': 0b00
                 },
-                'operand': bin(index(registers, operand2)),
+                'operand': bin = bin(registers[operand2]),
                 'identificationBits': 0b00
             }
         elif type(operand2) is type(0b0) and bin(operand2) <= 0b11111111:
@@ -115,10 +122,10 @@ class instructionDataProcessing:
                     'Shift amount': 0b00000,
                     'Shift type': 0b00
                 },
-                'operand': bin(operand2),
+                'operand': bin = bin(operand2),
                 'identificationBits': 0b00
             }
-        # operand2 not in registers permite aplicar una condicional de strings
+        # ESTA PARTE ES IMPORTANTE, DEBIDO A QUE SE TRATA DE UN SIMBOLO
         elif type(operand2) is type("string") and operand2 not in registers:
             self.operand2 = {
                 'operand': operand2,
@@ -126,7 +133,7 @@ class instructionDataProcessing:
             }
         else:
             print("El operando debe ser valido")
-        self.comment = ""
+        self.comment: str = comment
         self.mode = mode
         self.displacement = 0b0000000000
 
@@ -312,6 +319,11 @@ def changeRegisterValue(register, value):
     
     return registers[register]
 
+# Modificar:
+# 1. Modificar las clases de manera que tengan dos parametros: lc y mode
+# 2. Modificar el algoritmo de column_index + 1 con un analisis de cada token exceptuando los que estan definidos
+# 3. 
+
 instructions = []
 def lexicalScanRoutine(object_code): 
     counter = 0
@@ -332,9 +344,7 @@ def lexicalScanRoutine(object_code):
                     
                                 
         line_index = object_code.index(line)
-        # Inicializacion de la instruccion
-        # self, LocationCounter, mnemonic, register1, register2, operand2, mode
-        instructionDATA = instructionDataProcessing(LocationCounter + object_code.index(line), "AND", "", "", "", mode[0])
+
         # LocationCounter, register1, register2, register3, register4, mode
         instructionMUL = instructionMultiply(LocationCounter + object_code.index(line), "R1", "", "", "", mode[0])
         # self, LocationCounter, register1, register2, offset, mode
@@ -342,35 +352,33 @@ def lexicalScanRoutine(object_code):
 
         for column in line:
             column_index = object_code[line_index].index(column)
-            # Label
-            if ":" in object_code[line_index][0]:
-                # Buscar el Label en el SymbolTable
-                if len(SymbolTable) > 0:
-                    for symbol in SymbolTable:
-                        if object_code[line_index][0] in SymbolTable[symbol][0]:
-                            print("El Label esta registrado en el Symbol Table")
-                            break
-                        else:
-                            object_code[line_index][0] = object_code[line_index][0].split(":")
-                            instructionDATA.label = object_code[line_index][0]
-                            instructionMUL.label = object_code[line_index][0]
-                            instructionSDT.label = object_code[line_index][0]
-                elif len(SymbolTable) == 0:
-                    object_code[line_index][0] = object_code[line_index][0].split(":")[0]
-                    instructionDATA.label = object_code[line_index][0]
-                    instructionMUL.label = object_code[line_index][0]
-                    instructionSDT.label = object_code[line_index][0]
+
+            def insertLabel():
+                if ":" in object_code[line_index][0]:
+                    # Buscar el Label en el SymbolTable
+                    if len(SymbolTable) > 0:
+                        for symbol in SymbolTable:
+                            if object_code[line_index][0] in SymbolTable[symbol][0]:
+                                print("El Label esta registrado en el Symbol Table")
+                                break
+                            else:
+                                object_code[line_index][0] = object_code[line_index][0].split(":")
+                                label = object_code[line_index][0]
+                                return label
+                    elif len(SymbolTable) == 0:
+                        object_code[line_index][0] = object_code[line_index][0].split(":")[0]
+                        label = object_code[line_index][0]
+                        return label
+                else:
+                    print("No hay un label en la linea de codigo objetivo")
             
-            # Directive: Realizar modificaciones
-            for directive in DirectiveTable:
-                if object_code[line_index][column_index] is directive and column_index == 0:
-                    instructionDATA.directive = object_code[line_index][0]
-                    instructionMUL.directive = object_code[line_index][0]
-                    instructionSDT.directive = object_code[line_index][0]
-                elif object_code[line_index][column_index] is directive and column_index == 1 and instructionDATA.label:
-                    instructionDATA.directive = object_code[line_index][1]
-                    instructionMUL.directive = object_code[line_index][1]
-                    instructionSDT.directive = object_code[line_index][1]
+            def insertDirective(label=None):
+                for directive in DirectiveTable:
+                    if object_code[line_index][column_index] is directive and column_index == 0:
+                        directive_line = object_code[line_index][0]
+                    elif object_code[line_index][column_index] is directive and column_index == 1 and label == True:
+                        directive_line = object_code[line_index][1]
+                return directive_line
 
             def insertOperandRegister(register, value):
                 if value in registers:
@@ -378,60 +386,66 @@ def lexicalScanRoutine(object_code):
                     return register
             
             if type == "DATA":
+                #Label
+                label = insertLabel()
+
+                # Directive
+                if label == None:
+                    directive = insertDirective()
+                else:
+                    directive = insertDirective(label)
+
                 # Mnemonic
                 for operation in OpCodeTable[0]:
                     if column_index >= 0 and column_index <= 3 and object_code[line_index][column_index] == operation:
-                        instructionDATA.mnemonic = object_code[line_index][column_index]
+                        mnemonic = object_code[line_index][column_index]
 
                 # OperandRegister
-                # Se bugea porque ya tiene un valor asignado y se camia por el siguiente registro
-                if len(instructionDATA.mnemonic) > len("") and object_code[line_index][column_index] in registers and len(instructionDATA.operandRegister) == len(""):
-                    instructionDATA.operandRegister = object_code[line_index][column_index]
-                    print(instructionDATA.operandRegister)
+                if mnemonic and object_code[line_index][column_index] in registers:
+                    operandRegister = object_code[line_index][column_index]
                     index_operand1 = column_index
                 
                 # destinationRegister
                 if instructionDATA.operandRegister and index_operand1 + 1 != None:
                     if object_code[line_index][index_operand1 + 1] in registers:
-                        instructionDATA.destinationRegister = object_code[line_index][index_operand1 + 1]
+                        destinationRegister = object_code[line_index][index_operand1 + 1]
                         index_destinationRegister = index_operand1 + 1
                 
                 # Operand2
                 if instructionDATA.destinationRegister and index_destinationRegister + 1 != None:
                     if object_code[line_index][index_destinationRegister + 1] in registers and "#" in object_code[line_index][index_destinationRegister + 1] and object_code[line][index_destinationRegister + 1] != instructionDATA.operand1 and object_code[line][index_destinationRegister + 1] != instructionDATA.destinationRegister:
-                        instructionDATA.operand2["operand"] = object_code[line_index][index_destinationRegister + 1]
+                        operand2 = object_code[line_index][index_destinationRegister + 1]
 
                     elif object_code[line_index][index_destinationRegister + 1] in registers:
-                        instructionDATA.operand2["operand"] = object_code[line_index][index_destinationRegister + 1]
+                        operand2 = object_code[line_index][index_destinationRegister + 1]
                     
-                    # Identificacion bit
+                    # Identificacion bit (Esto deberia definirse en la clase como condicional)
                     for symbol in SymbolTable:
                         while symbol:
                             if symbol.name == object_code[line_index][index_destinationRegister + 1]:
-                                instructionDATA.operand2["identificacionBits"] = 0b01
+                                identificationBits = 0b01
                             symbol = symbol.next
 
                 # Comment
                 if ";" in object_code[line_index][column_index]:
                     object_code[line_index][column_index] = object_code[line_index][column_index].split(";")
-                    instructionDATA.comment = object_code[line_index][column_index + 1]
+                    comment = object_code[line_index][column_index + 1]
 
                 # Mode (Activado mediante opciones del software del simulador)
                 instructionDATA.mode = mode[0]
                         
                 LocationCounter = LocationCounter + 1
-                print(instructionDATA.get_info())
-                print(column_index)
-                print(len(range(len(line))))
-
 
                 if instructionDATA.destinationRegister in registers:
-                    instructions.append(instructionDATA.get_list())
+                    instructionDATA = instructionDataProcessing(LocationCounter + object_code.index(line), label, directive, mnemonic, operandRegister, destinationRegister, operand2, comment, mode[0])
+                    instructions.append(instructionDATA)
                     break
                 else:
                     print("Hubo un error")
 
             elif type == "MUL":
+                # Label
+                insertLabel()
 
                 if column_index >= 0 and column_index <= 3:
                     instructionMUL.destinationRegister = insertOperandRegister(instructionMUL.destinationRegister, object_code[line_index][column_index])
@@ -457,6 +471,9 @@ def lexicalScanRoutine(object_code):
                     break
 
             elif type == "SDT":
+                # Label
+                insertLabel()
+
                 if column_index >= 0 and column_index <= 3:
                     instructionSDT.baseRegister = insertOperandRegister(instructionSDT.baseRegister, object_code[line_index][column_index])
 
