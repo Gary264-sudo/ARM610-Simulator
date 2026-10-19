@@ -15,7 +15,7 @@
 # Principio de codigo:
 # 
 
-registers = {"R1": 50, "R2": 5, "R3": 10, "R4": 5, "R5": 6, "R6": 7, "R7": 8, "R8": 0, "R9": 0, "R10": 0,
+registers = {"R1": 50, "R2": 5, "R3": 10, "R4": 5, "R5": 6, "R6": 3, "R7": 8, "R8": 0, "R9": 0, "R10": 0,
                  "R11": 0, "R12": 0, "R13": 0, "R14": 0}
 
 mode = ["User mode", "FIQ mode", "IRQ mode", "Supervisor mode", "Abort mode", "Undefined mode"]
@@ -213,8 +213,8 @@ class instructionSingleData:
         self.byteWordBit = 0b0
         self.writeBackBit = 0b0
         self.loadStoreBit = 0b0
-        self.baseRegister = register1
-        self.sourceDestinationRegister = register2
+        self.baseRegister = register2
+        self.sourceDestinationRegister = register1
         if self.inmediateOffset == 0b0 and offset < 4095:
             self.offset = offset # 0b000000000000
         elif self.inmediateOffset == 0b1 and offset in registers:
@@ -718,12 +718,48 @@ def operationMUL(ins):
     return microoperations, result
 
 # En el algoritmo de Booth, los negativos se representan con complementos + 1
-# El bit mas significativo (signo) no se elimina, sino simplemente se duplica cuando se hace el right shift
-# 
+# El bit mas significativo (signo) no se elimina, sino simplemente se duplica cuando se hace el right shift 
+
+def sumTwo(first, two):
+    first_list = list(first)
+    two_list = list(two)
+    result_list = []
+
+    iteration = 0
+    for bit1, bit2 in reversed(list(zip(first_list, two_list))):
+        bit1 = int(bit1, 2)
+        bit2 = int(bit2, 2)
+        if iteration == 0:
+            # Para el primer bit de a y b (Estos bits son del semisumador)
+            sum_ss = bit1 ^ bit2
+            carry_ss = bit1 & bit2
+            result_list.insert(0, str(sum_ss))
+        elif iteration == 1:
+            # Para el siguiente bit de a y b del carry ss (Estos bits son del sumador completo)
+            sum_sc = (bit1 & ~bit2 & ~carry_ss) | (~bit1 & bit2 & ~carry_ss) | (~bit1 & ~bit2 & carry_ss) | (bit1 & bit2 & carry_ss)
+            carry_sc = (bit1 & bit2) | (bit1 & carry_ss) | (bit2 & carry_ss)
+            result_list.insert(0, str(sum_sc))
+        elif iteration >= 2:
+            # Para el siguiente bit de a y b (loop while) del carry_sc (Sumador completo tradicional)
+            sum_sc = (bit1 & ~bit2 & ~carry_sc) | (~bit1 & bit2 & ~carry_sc) | (~bit1 & ~bit2 & carry_sc) | (bit1 & bit2 & carry_sc) 
+            carry_sc = (bit1 & bit2) | (bit1 & carry_sc) | (bit2 & carry_sc)
+            result_list.insert(0, str(sum_sc))
+        iteration = iteration + 1
+    result_list = "".join(result_list)
+
+    return result_list
 
 def complement_plus1(m):
-    # complemento + 1 (representacion negativa)
-    m_complement = format(~(int(m, 2)), 'b')
+    print("m:", m)
+    m_list = list(m)
+    count = 0
+    for bit in m_list:
+        if bit == '0':
+            m_list[count] = '1'
+        elif bit == '1':
+            m_list[count] = '0'
+        count = count + 1
+    m_complement = ''.join(m_list)
     one_bit = format(1, 'b').zfill(32)
     
     m_complement_list = list(m_complement)
@@ -749,38 +785,45 @@ def complement_plus1(m):
             sum_sc = (bit_c & ~bit_one & ~carry_sc) | (~bit_c & bit_one & ~carry_sc) | (~bit_c & ~bit_one & carry_sc) | (bit_c & bit_one & carry_sc) 
             carry_sc = (bit_c & bit_one) | (bit_c & carry_sc) | (bit_one & carry_sc)
             m_negative.insert(0, str(sum_sc))
-        iteration = iter1 + 1
+        iter1 = iter1 + 1
     m_negative = "".join(m_negative)
+
+    print("m_negative:", m_negative)
     return m_negative
 
-def sumTwo(first, two):
-    first_list = list(first)
-    two_list = list(two)
+def minusone_complement(P):
+    print("SUCCESS ONE TWO")
+    a = P
+    b = format(1, 'b').zfill(len(P))
+
+    a_list = list(a)
+    b_list = list(b)
     result_list = []
 
     iteration = 0
-    for bit1, bit2 in reversed(list(zip(first_list, two_list))):
+    for bit1, bit2 in reversed(list(zip(a_list, b_list))):
         bit1 = int(bit1, 2)
         bit2 = int(bit2, 2)
         if iteration == 0:
-            # Para el primer bit de a y b (Estos bits son del semisumador)
-            sum_ss = bit1 ^ bit2
-            carry_ss = bit1 & bit2
-            result_list.insert(0, str(sum_ss))
-        elif iteration == 1:
-            # Para el siguiente bit de a y b del carry ss (Estos bits son del sumador completo)
-            sum_sc = (bit1 & ~bit2 & ~carry_ss) | (~bit1 & bit2 & ~carry_ss) | (~bit1 & ~bit2 & carry_ss) | (bit1 & bit2 & carry_ss) 
-            carry_sc = (bit1 & bit2) | (bit1 & carry_ss) | (bit2 & carry_ss)
-            result_list.insert(0, str(sum_sc))
-        elif iteration >= 2:
-            # Para el siguiente bit de a y b (loop while) del carry_sc (Sumador completo tradicional)
-            sum_sc = (bit1 & ~bit2 & ~carry_sc) | (~bit1 & bit2 & ~carry_sc) | (~bit1 & ~bit2 & carry_sc) | (bit1 & bit2 & carry_sc) 
-            carry_sc = (bit1 & bit2) | (bit1 & carry_sc) | (bit2 & carry_sc)
-            result_list.insert(0, str(sum_sc))
+            diff = bit1 ^ bit2
+            borrow_sb = ~(bit1) & bit2
+            result_list.insert(0, str(diff))
+        if iteration == 1:
+            diff_sc = (~(bit1) & ~(bit2) & borrow_sb) | (~(bit1) & (bit2) & ~(borrow_sb)) | (bit1 & ~(bit2) & ~(borrow_sb)) | (bit1 & bit2 & borrow_sb)
+            borrow_sc = (~(bit1) & ~(bit2) & borrow_sb) | (~(bit1) & (bit2) & ~(borrow_sb)) | (~(bit1) & (bit2) & borrow_sb) | (bit1 & bit2 & borrow_sb)
+            result_list.insert(0, str(diff_sc))
+        if iteration >= 2:
+            diff_sc = (~(bit1) & ~(bit2) & borrow_sc) | (~(bit1) & (bit2) & ~(borrow_sc)) | (bit1 & ~(bit2) & ~(borrow_sc)) | (bit1 & bit2 & borrow_sc)
+            borrow_sc = (~(bit1) & ~(bit2) & borrow_sc) | (~(bit1) & (bit2) & ~(borrow_sc)) | (~(bit1) & (bit2) & borrow_sc) | (bit1 & bit2 & borrow_sc)
+            result_list.insert(0, str(diff_sc))
         iteration = iteration + 1
     result_list = "".join(result_list)
 
-    return result_list
+    print("result_list: ", result_list)
+
+    P = ~int(result_list, 2)
+
+    return P
 
 def operationMLA(ins):
     microoperations = [[f"DATA", f"MAR"], [f"W", f"MDR"], [f"MDR * {ins.operandRegister2}", f"AC"]]
@@ -792,61 +835,98 @@ def operationMLA(ins):
     x = len(m)
     y = len(r)
 
-    # m = 2 = 10
-    # r = 2 = 10
-    # -m = -2 = 10
+    print("Length de x: ", x)
 
-    A = m + format(y, 'b') + format(1, 'b')
-    S = m_negative + format(y, 'b') + format(1, 'b')
-    P = format(x, 'b') + r + format(1, 'b')
+    A = m + format(0, 'b').zfill(32) + format(0, 'b')
+    S = m_negative + format(0, 'b').zfill(32) + format(0, 'b')
+    P = format(0, 'b').zfill(32) + r + format(0, 'b')
+    print("A:", A)
+    print("S:", S)
+    print("P:", P)
 
     def shift1P(P):
+        # Contar los zeros de un numero hasta que alcance uno
+        remaining_MSB_zeroes = 0
+        for number in P:
+            if number == '0':
+                remaining_MSB_zeroes = remaining_MSB_zeroes + 1
+            elif number == '1':
+                break        
         P = int(P, 2)
         P = P >> 1
         P = format(P, 'b')
-        P[0] = '1'
+        P = P.zfill(remaining_MSB_zeroes + len(P) + 1)
+        P_list = list(P)
+        P_list[0] = '1'
+        P = ''.join(P_list)
         return P
     
     def shift0P(P):
+        # Contar los zeros de un numero hasta que alcance uno
+        remaining_MSB_zeroes = 0
+        for number in P:
+            if number == '0':
+                remaining_MSB_zeroes = remaining_MSB_zeroes + 1
+            elif number == '1':
+                break
         P = int(P, 2)
         P = P >> 1
         P = format(P, 'b')
+        P = P.zfill(remaining_MSB_zeroes + len(P) + 1)
         return P
 
+    # Bug: Cuando R5 es impar, no tira el numero correcto
+    # Correccion: Quitar los 33 bits mas significativos, de manera de tener los 32 bits.
     count = 0
-    while(count != x):
-        if(P[30:] == '01'):
+    while(count != x + 1):
+        if(P[63:] == '01'):
             P = sumTwo(P, A)
+            print("Sum of P and A: ", P)
             if P[0] == '1':
                 P = shift1P(P)
             elif P[0] == '0':
                 P = shift0P(P)
-        elif(P[30:] == '10'):
+        elif(P[63:] == '10'):
             P = sumTwo(P, S)
+            print("Sum of P and S: ", P)
             if P[0] == '1':
                 P = shift1P(P)
             elif P[0] == '0':
                 P = shift0P(P)
-        elif(P[30:] == '00'):
+        elif(P[63:] == '00'):
             if P[0] == '1':
                 P = shift1P(P)
             elif P[0] == '0':
                 P = shift0P(P)
-        elif(P[30:] == '11'):
+        elif(P[63:] == '11'):
             if P[0] == '1':
                 P = shift1P(P)
+                print("shift1P", P)
             elif P[0] == '0':
                 P = shift0P(P)
+                print("shift0P", P)
         count = count + 1
-    
-    if P[0] == '1':
-        P = minusone_complement()
+        print("-------------------")
+        print(P)
+
+    P_list = list(P)
+    value = 0
+    while(value != 33):
+        P_list.pop(0)
+        value = value + 1
+    P = ''.join(P_list)
 
     result = P
 
     registers[ins.destinationRegister] = result
 
     return microoperations, result
+
+def operationSTR(ins):
+    pass
+
+def operationLDR(ins):
+    ins.
 
 microoperations_list = []
 result_list = []
@@ -867,10 +947,12 @@ def OnePassAssembler(instructions):
                 comando = searchSymbolTable(ins, "D")
             else:
                 # A Symbol used?
-                if hasattr(ins, 'operand2'): 
+                if hasattr(ins, 'operand2'):
                     if ins.operand2["operand"] not in registers:
                         print(1)
                         microoperations, result = searchSymbolTable(ins, "S")
+                    else:
+                        microoperations, result = assembleLine(ins)
                 elif hasattr(ins, 'accumulate'):
                     print(2)
                     microoperations, result = assembleLine(ins)
