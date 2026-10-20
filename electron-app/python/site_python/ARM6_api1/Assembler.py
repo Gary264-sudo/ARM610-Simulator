@@ -200,28 +200,48 @@ class instructionMultiply:
         return f"Information: {self.label}, {self.directive}, {self.condition}, {self.accumulate}, {self.conditionCode}, {self.destinationRegister}, {self.operandRegister1}, {self.operandRegister2}, {self.operandRegister3}, {self.comment}, {self.mode}, {self.displacement}"
 
 # Se tiene que realizar las condicionales
+# Realizar la parte de offsetZero = 0b0
 class instructionSingleData:
-    def __init__(self, LocationCounter, label, register1, register2, offset, comment, mode):
+    def __init__(self, LocationCounter, label, mnemonic, register1, register2, offsetZero, mode, offsetShift=None, offsetRegister=None, comment=None):
         # Single Data Transfer:
         self.lc = LocationCounter
         self.label = label
         self.directive = ""
+        if offsetZero == 0:
+            self.offsetZero = 0b0
+        elif offsetZero == 1:
+            self.offsetZero = 0b1
         self.condition = 0b0000
-        self.inmediateOffset = 0b1
-        self.indexingBit = 0b0
+        if offsetRegister in registers or offsetRegister == None:
+            self.inmediateOffset = 0b0
+        elif type(offsetRegister) == int:
+            self.inmediateOffset = 0b1
+        if self.offsetZero == 0b1: # R4 R5 | R4 [R5] | R4 [R5, #2]
+            self.indexingBit = 0b1
+        elif self.offsetZero == 0b0: # R4 [R5], #2
+            self.indexingBit = 0b0
         self.upDownBit = 0b0
         self.byteWordBit = 0b0
         self.writeBackBit = 0b0
-        self.loadStoreBit = 0b0
+        if mnemonic == 'STR':
+            self.loadStoreBit = 0b0
+        elif mnemonic == 'LDR':
+            self.loadStoreBit = 0b1
         self.baseRegister = register2
         self.sourceDestinationRegister = register1
-        if self.inmediateOffset == 0b0 and offset < 4095:
-            self.offset = offset # 0b000000000000
-        elif self.inmediateOffset == 0b1 and offset in registers:
-            self.offset = {
-                "shift": 0b00000000,
-                "offsetRegister": offset
-            }
+        if self.inmediateOffset == 0b0:
+            self.offset = offsetRegister
+        elif self.inmediateOffset == 0b1:
+            if type(offsetShift) == int:
+                self.offset = {
+                    'shift': format(offsetShift, 'b'),
+                    'offsetRegister': format(offsetRegister, 'b')
+                }
+            elif offsetShift == None:
+                self.offset = {
+                    'shift': format(0, 'b'),
+                    'offsetRegister': format(offsetRegister, 'b')
+                }
         self.comment = comment
         self.mode = mode
         self.displacement = 0b0000000000
@@ -339,14 +359,12 @@ def lexicalScanRoutine(object_code):
     global type_line
     counter = 0
     LocationCounter = counter
-    
-
-    # object_code = [["LOOP:", "AND", "R1"]]
 
     for line in object_code:
         advert = 0
         advert_MUL = 0
         advert_SDT = 0
+        offset = []
 
         for first_column in line:
             for key in OpCodeTable:
@@ -515,39 +533,116 @@ def lexicalScanRoutine(object_code):
 
             elif type_line == "SDT":
                 # Label
+                print(column)
                 if 'label' not in locals():
                     label = insertLabel()
                     if label != None:
                         continue
 
-                if column_index >= 0 and column_index <= 3 and 'baseRegister' not in locals() or baseRegister == None:
+                if 'mnemonic' not in locals():
+                    for operation in OpCodeTable[2]:
+                        print(operation)
+                        if column_index >= 0 and column_index <= 3 and column == operation:
+                            mnemonic = column
+                            break
+                    if column_index < len(line) - 1:
+                        continue                
+
+                elif column_index >= 0 and column_index <= 3 and 'mnemonic' in locals() and 'baseRegister' not in locals() or baseRegister == None:
                     baseRegister = insertOperandRegister(column)
                     continue
 
-                if 'baseRegister' in locals() and 'sourceDestinationRegister' not in locals():
-                    sourceDestinationRegister = insertOperandRegister(column)
-                    continue
-
-                if 'sourceDestinationRegister' in locals() and 'offset' not in locals():
-                    if ";" in column:
-                        column = column.split(";")[0]
-                        offset = insertOperandRegister(column)
+                elif 'baseRegister' in locals() and 'sourceDestinationRegister' not in locals():
+                    # "[R5,"
+                    if "[" in column and "," in column:
+                        column = column.split("[")[1]
+                        column = column.split(",")[0]
+                        sourceDestinationRegister = insertOperandRegister(column)
+                        offsetZero = 1
+                        if column_index < len(line) - 1:
+                            continue
+                        elif sourceDestinationRegister == None:
+                            raise TypeError("No se ha definido baseRegister")
+                    # "[R5]"
+                    elif "[" in column and "]" in column:
+                        column = column.split("[")[1]
+                        column = column.split("]")[0]
+                        sourceDestinationRegister = insertOperandRegister(column)
+                        offsetZero = 1
+                        if column_index < len(line) - 1:
+                            continue
+                        elif sourceDestinationRegister == None:
+                            raise TypeError("No se ha definido baseRegister")  
+                        else:
+                            offsetRegister = None
+                            offsetShift = None
+                    # "[R5];"
+                    elif "[" in column and "]" in column and ";" in column:
+                        column = column.split("[")[1]
+                        column = column.split("]")[0]
+                        #column = column.split(";")[0]
+                        sourceDestinationRegister = insertOperandRegister(column)
+                        offsetZero = 1
                         advert_SDT = 1
                         if column_index < len(line) - 1:
                             continue
-                        elif offset == None:
-                            raise TypeError("No se ha definido offset")
+                        elif sourceDestinationRegister == None:
+                            raise TypeError("No se ha definido baseRegister")
+                        else:
+                            offsetRegister = None
+                            offsetShift = None
+                    # R5
                     else:
-                        offset = insertOperandRegister(column)
+                        sourceDestinationRegister = insertOperandRegister(column)
+                        offsetZero = 0
+                        if column_index < len(line) - 1:
+                            continue
+                        offsetRegister = None
+                        offsetShift = None
+
+                # #2] | #2];
+                # R5, #2] | R5, #2];
+                elif 'sourceDestinationRegister' in locals() and len(offset) == 0 and advert_SDT == 0:
+                    print("Success: ", column)
+                    if "#" in column and "]" in column:
+                        column = column.split("#")[1]
+                        column_list = column.split("]") # 2, ]; | 2, ]
+                        offsetRegister = column_list[0]
+                        offsetRegister = int(offsetRegister)
+                        if ";" in column_list[1]:
+                            advert_SDT = 1
+                        if column_index < len(line) - 1:
+                            print("Success")
+                            continue
+                        elif offsetRegister == None:
+                            raise TypeError("No se ha definido offset")
+                        else: 
+                            offsetShift = None
+                    elif "," in column:
+                        column = column.split(",")[0]
+                        offsetRegister = insertOperandRegister(column)
                         continue
 
+                # R5, #2] | R5, #2];
+                elif 'offsetRegister' in locals() and 'shift' not in locals() and advert_SDT == 0:
+                    print("offsetShift", column)
+                    column = column.split("#")[1]
+                    column_list = column.split("]") # 2, ] | 2, ];
+                    offsetShift = column_list[0]
+                    if ";" in column_list[1]:
+                        advert_SDT = 1
+                    if column_index < len(line) - 1:
+                            continue
+                    #elif shift == None:
+                    #    raise TypeError("No se ha definido offset")
+                
                 if advert_SDT == 1:
                     comment = column
                 else:
-                    comment = ""
+                    comment = None
 
                 if column_index == len(line) - 1:
-                    instructions.append(instructionSingleData(LocationCounter + object_code.index(line), label, baseRegister, sourceDestinationRegister, offset, comment, mode[0]))
+                    instructions.append(instructionSingleData(LocationCounter + object_code.index(line), label, mnemonic, baseRegister, sourceDestinationRegister, offsetZero, mode[0], offsetShift, offsetRegister, comment=comment))
                     break
             else:
                 print("¡Error, defina un mnemonic!")
@@ -715,12 +810,12 @@ def operationMUL(ins):
     microoperations = []
     result = 1
 
-    return microoperations, result
-
-# En el algoritmo de Booth, los negativos se representan con complementos + 1
-# El bit mas significativo (signo) no se elimina, sino simplemente se duplica cuando se hace el right shift 
+    return microoperations, result 
 
 def sumTwo(first, two):
+    first = first.zfill(32)
+    two = two.zfill(32)
+
     first_list = list(first)
     two_list = list(two)
     result_list = []
@@ -825,6 +920,8 @@ def minusone_complement(P):
 
     return P
 
+# En el algoritmo de Booth, los negativos se representan con complementos + 1
+# El bit mas significativo (signo) no se elimina, sino simplemente se duplica cuando se hace el right shift
 def operationMLA(ins):
     microoperations = [[f"DATA", f"MAR"], [f"W", f"MDR"], [f"MDR * {ins.operandRegister2}", f"AC"]]
 
@@ -923,10 +1020,160 @@ def operationMLA(ins):
     return microoperations, result
 
 def operationSTR(ins):
-    pass
+    microoperations = []
+    result = 1
+    return microoperations, result
+
+# Pointers
+class Pointer:
+    def __init__(self, data):
+        self.position = id(data)
+        self.data = data
+        self.next = None
+    
+    def get_node(self, index):
+        count = 0
+        if index == 0:
+            return self
+        else:
+            while count != index:
+                count = count + 1
+                self = self.next
+            return self
+
+def mulTwo(first, two):
+    m = format(first, 'b').zfill(32)
+    m_negative = complement_plus1(m)
+    r = format(two, 'b').zfill(32)
+
+    x = len(m)
+    y = len(r)
+
+    print("Length de x: ", x)
+
+    A = m + format(0, 'b').zfill(32) + format(0, 'b')
+    S = m_negative + format(0, 'b').zfill(32) + format(0, 'b')
+    P = format(0, 'b').zfill(32) + r + format(0, 'b')
+    
+    def shift1P(P):
+        # Contar los zeros de un numero hasta que alcance uno
+        remaining_MSB_zeroes = 0
+        for number in P:
+            if number == '0':
+                remaining_MSB_zeroes = remaining_MSB_zeroes + 1
+            elif number == '1':
+                break        
+        P = int(P, 2)
+        P = P >> 1
+        P = format(P, 'b')
+        P = P.zfill(remaining_MSB_zeroes + len(P) + 1)
+        P_list = list(P)
+        P_list[0] = '1'
+        P = ''.join(P_list)
+        return P
+    
+    def shift0P(P):
+        # Contar los zeros de un numero hasta que alcance uno
+        remaining_MSB_zeroes = 0
+        for number in P:
+            if number == '0':
+                remaining_MSB_zeroes = remaining_MSB_zeroes + 1
+            elif number == '1':
+                break
+        P = int(P, 2)
+        P = P >> 1
+        P = format(P, 'b')
+        P = P.zfill(remaining_MSB_zeroes + len(P) + 1)
+        return P
+
+    # Bug: Cuando R5 es impar, no tira el numero correcto
+    # Correccion: Quitar los 33 bits mas significativos, de manera de tener los 32 bits.
+    count = 0
+    while(count != x + 1):
+        if(P[63:] == '01'):
+            P = sumTwo(P, A)
+            if P[0] == '1':
+                P = shift1P(P)
+            elif P[0] == '0':
+                P = shift0P(P)
+        elif(P[63:] == '10'):
+            P = sumTwo(P, S)
+            if P[0] == '1':
+                P = shift1P(P)
+            elif P[0] == '0':
+                P = shift0P(P)
+        elif(P[63:] == '00'):
+            if P[0] == '1':
+                P = shift1P(P)
+            elif P[0] == '0':
+                P = shift0P(P)
+        elif(P[63:] == '11'):
+            if P[0] == '1':
+                P = shift1P(P)
+                print("shift1P", P)
+            elif P[0] == '0':
+                P = shift0P(P)
+                print("shift0P", P)
+        count = count + 1
+    
+    P_list = list(P)
+    value = 0
+    while(value != 33):
+        P_list.pop(0)
+        value = value + 1
+    P = ''.join(P_list)
+
+    result = P
+
+    return int(result)
 
 def operationLDR(ins):
-    ins.
+    microoperations = []
+
+    # R4 (5) = R5 (4|30)
+    # * R4 = 4
+
+    if ins.indexingBit == 0b0:
+        print("indexingBit 0b0")
+        pass
+    elif ins.indexingBit == 0b1:
+        # R4 R5
+        if ins.offset == None and ins.offsetZero == 0b0:
+            addressof_baseRegister = Pointer(ins.baseRegister)
+            registers[ins.sourceDestinationRegister] = addressof_baseRegister
+            result = registers[ins.sourceDestinationRegister]
+            return microoperations, result
+        # R4 [R5]
+        if ins.offset == None and ins.offsetZero == 0b1:
+            addressof_baseRegister = Pointer(ins.baseRegister)
+            registers[ins.sourceDestinationRegister] = addressof_baseRegister
+            result = registers[ins.sourceDestinationRegister]
+            result = registers[result.data]
+            result = format(result, 'b').zfill(32)
+            return microoperations, result
+        # R4 [R5, #3]
+        elif ins.offset != None and ins.inmediateOffset == 0b1:
+            addressof_sum = Pointer(sumTwo(format(registers[ins.baseRegister], 'b'), ins.offset["offsetRegister"]))
+            registers[ins.sourceDestinationRegister] = addressof_sum.data
+            result = registers[ins.sourceDestinationRegister]
+            return microoperations, result
+        # R4 [R5, R6 #4]
+        elif ins.offset != None and ins.inmediateOffset == 0b0:
+            print("Registro offset", ins.offset['offsetRegister'])
+            multiplication = mulTwo(registers[ins.offset["offsetRegister"], ins.offset["shift"]])
+            sum = sumTwo(registers[ins.baseRegister], multiplication)
+            addressof_mul = Pointer(sum)
+            registers[ins.sourceDestinationRegister] = addressof_mul.data
+            result = registers[ins.sourceDestinationRegister]
+            return microoperations, result
+    # elif ins.deferencingbit == 0b10:
+
+    # registers[ins.sourceDestinationRegister] = id(registers[ins.baseRegister])
+    # print("ID: ", id(registers[ins.baseRegister]))
+    # result = registers[ins.sourceDestinationRegister]
+    # registers[ins.baseRegister] = 
+    # ins.sourceDestinationRegister
+    # ins.offset
 
 microoperations_list = []
 result_list = []
@@ -969,7 +1216,7 @@ def OnePassAssembler(instructions):
 
 # OnePassAssembler()
 # Lexical Scan Routine
-script = "SBC R1 R2 R3\r\nMLA R4 R5 R6 R7; comentario"
+script = "SBC R1 R2 R3\r\nLDR R4 [R5, #2]"
 object_code = convertir(script)
 # print(object_code)
 lexicalScanRoutine(object_code)
