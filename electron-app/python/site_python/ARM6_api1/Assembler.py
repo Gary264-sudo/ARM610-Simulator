@@ -533,7 +533,6 @@ def lexicalScanRoutine(object_code):
 
             elif type_line == "SDT":
                 # Label
-                print(column)
                 if 'label' not in locals():
                     label = insertLabel()
                     if label != None:
@@ -603,7 +602,6 @@ def lexicalScanRoutine(object_code):
                 # #2] | #2];
                 # R5, #2] | R5, #2];
                 elif 'sourceDestinationRegister' in locals() and len(offset) == 0 and advert_SDT == 0:
-                    print("Success: ", column)
                     if "#" in column and "]" in column:
                         column = column.split("#")[1]
                         column_list = column.split("]") # 2, ]; | 2, ]
@@ -612,7 +610,6 @@ def lexicalScanRoutine(object_code):
                         if ";" in column_list[1]:
                             advert_SDT = 1
                         if column_index < len(line) - 1:
-                            print("Success")
                             continue
                         elif offsetRegister == None:
                             raise TypeError("No se ha definido offset")
@@ -625,7 +622,6 @@ def lexicalScanRoutine(object_code):
 
                 # R5, #2] | R5, #2];
                 elif 'offsetRegister' in locals() and 'shift' not in locals() and advert_SDT == 0:
-                    print("offsetShift", column)
                     column = column.split("#")[1]
                     column_list = column.split("]") # 2, ] | 2, ];
                     offsetShift = column_list[0]
@@ -1216,7 +1212,7 @@ def OnePassAssembler(instructions):
 
 # OnePassAssembler()
 # Lexical Scan Routine
-script = "SBC R1 R2 R3\r\nLDR R4 [R5, #2]"
+script = "ADC R1 R2 R3\r\nLDR R4 [R5, #2]"
 object_code = convertir(script)
 # print(object_code)
 lexicalScanRoutine(object_code)

@@ -20,6 +20,7 @@ function ARM6(){
 
     const COP = "0000"; // COP esta conformado por 4 digitos binarios.
     const DATA = "0000 0000 0000"; // Data esta conformado por tres digitos hexadecimales de 12 bits.
+    const ACValue = "0000"
 
     // Las funciones de axios pueden ser async, puesto que es una libreria basado en promesas, lo que se alinea con las funciones async
     const changeValuePC = async () => {
@@ -30,6 +31,14 @@ function ARM6(){
         valuePC_hex = res.data;
         document.getElementById('valuePC_hex_JS')!.innerHTML = valuePC_hex;
     };
+
+    const activateLine = () => {
+        return (
+            <>
+                <Xarrow start="CF" end="IF" animateDrawing={-3} headSize={2} tailSize={2} dashness={true} showTail={true} path="grid"/>
+            </>
+        )
+    }
 
     {/* Anotaciones:
         - Tener en cuenta cuando se hace operaciones de escritura, verificar si esta activado el Write Buffer */}
@@ -54,7 +63,15 @@ function ARM6(){
                     </div>
                 </div>
 
-                <Xarrow start="CF" end="IF" animateDrawing={-3} headSize={2} tailSize={2} dashness={true} showTail={true} path="grid"/>
+                <div className="AC">
+                    <h1 className="ACHeader">Acumulador</h1>
+                    <div className="AcumuladorBox" id="ACBox">
+                        <div className="ACValue">{ACValue}</div>
+                    </div>
+                </div>
+
+                <button onClick={activateLine}></button>
+                <Xarrow start="ACBox" end="IF" animateDrawing={-3} headSize={2} tailSize={2} dashness={true} showTail={true} path="grid"/>
 
                 <div className="ControlUnit">
                     <header className="Decodificador">

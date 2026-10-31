@@ -57,4 +57,27 @@
             }
         }
     }
+
+    .AC{
+        .ACHeader{
+            text-align: left;
+            color: black;
+            font-size: 16px;
+        }
+        .AcumuladorBox{
+            margin: auto;
+            display: flex;
+            width: auto;
+            height: 25px;
+            
+            .ACValue{
+                width: 50px;
+                border: 1px solid;
+                border-color: black;
+
+                text-align: center;
+                color: black;
+            }
+        }
+    }
 }

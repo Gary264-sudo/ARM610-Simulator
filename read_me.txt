@@ -95,3 +95,6 @@ Usualmente el ensamblador tiene dos identification bits de manera de detectar cu
  - 11: a loader directive
 En este caso, en lugar de realizarse por instruccion, se ha realizado por operando.
 
+6. Simulador visual
+
+
